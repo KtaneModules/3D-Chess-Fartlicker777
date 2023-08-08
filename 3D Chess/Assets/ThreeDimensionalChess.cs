@@ -27,6 +27,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
    string[] PieceTypes = { "King", "Knight", "Bishop", "Rook", "Queen"};
    string[] PieceTypesAbbr = { "K", "N", "B", "R", "Q" };
    int[] SubmitCoordinateIndices = { 0, 0, 0, 0};
+   int LastPressed = -1;
 
    int[][][] Board = new int[][][] {
       new int[][] {
@@ -112,8 +113,16 @@ public class ThreeDimensionalChess : MonoBehaviour {
    }
 
    void CButPress (KMSelectable C) {
+      if (ModuleSolved) {
+         return;
+      }
       for (int i = 0; i < 7; i++) {
          if (C == CoordinateButtons[i]) {
+            StartCoroutine(KeyPress(i));
+            if (LastPressed != -1) {
+               StartCoroutine(KeyDepress(LastPressed));
+            }
+            LastPressed = i;
             int temp = i - Offset;
             if (temp < 0) {
                temp += 7;
@@ -124,15 +133,33 @@ public class ThreeDimensionalChess : MonoBehaviour {
    }
 
    void SButPress (KMSelectable S) {
+      Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+      if (ModuleSolved) {
+         return;
+      }
       for (int i = 0; i < 5; i++) {
          if (S == SubmitButtons[i]) {
             if (i == 4) {
-               Piece Test = new Piece(SubmitCoordinateIndices[0], SubmitCoordinateIndices[1], SubmitCoordinateIndices[2], PieceTypes[SubmitCoordinateIndices[0]]);
-               if (PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Test.L, Test.R, Test.C) && PB.CheckPiece(Test.T, Test.L, Test.R, Test.C, Pieces[0].L, Pieces[0].R, Pieces[0].C)) {
+               Piece Test = new Piece(SubmitCoordinateIndices[1], SubmitCoordinateIndices[2], SubmitCoordinateIndices[3], PieceTypes[SubmitCoordinateIndices[0]]);
+               if (PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Test.L, Test.R, Test.C) && PB.CheckPiece(Test.T, Test.L, Test.R, Test.C, Pieces[0].L, Pieces[0].R, Pieces[0].C) && !CheckDuplicateCoordinatesForAll(Test)) {
                   Solve();
+                  if (LastPressed != -1) {
+                     StartCoroutine(KeyDepress(LastPressed));
+                     CoordinateDisplay.text = "!";
+                  }
+                  else {
+                     CoordinateDisplay.text = "sure";
+                  }
                }
                else {
                   Strike();
+                  Debug.LogFormat("[3D Chess #{0}] Submitting a {1} at {2}{3}{4} is incorrect.", ModuleId, Test.T, CoordinateNotation[0][Test.L], CoordinateNotation[1][Test.C], CoordinateNotation[2][Test.R]);
+                  if (PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Test.L, Test.R, Test.C)) {
+                     Debug.LogFormat("[3D Chess #{0}] The seventh piece does not attack the eighth.", ModuleId);
+                  }
+                  if (PB.CheckPiece(Test.T, Test.L, Test.R, Test.C, Pieces[0].L, Pieces[0].R, Pieces[0].C)) {
+                     Debug.LogFormat("[3D Chess #{0}] The eighth piece does not attack the first.", ModuleId);
+                  }
                }
             }
             else {
@@ -207,30 +234,80 @@ public class ThreeDimensionalChess : MonoBehaviour {
          
 
          for (int j = 0; j < i - 1; j++) {
-            if (PB.CheckPiece(Pieces[j].T, Pieces[j].L, Pieces[j].R, Pieces[j].C, Pieces[i].L, Pieces[i].R, Pieces[i].C)) { //Checks if any previous piece blocks the current one, although this is done shittily so it prolly has side effects that I don't care enough to fix.
+            if (PB.CheckPiece(Pieces[j].T, Pieces[j].L, Pieces[j].R, Pieces[j].C, Pieces[i].L, Pieces[i].R, Pieces[i].C) || ShareExactCoordinate(Pieces[j], Pieces[i])) { //Checks if any previous piece blocks the current one, although this is done shittily so it prolly has side effects that I don't care enough to fix.
                goto RestartPiece;
             }
          }
          Timwi = 0;
       }
 
-      FinalPieceType =  PieceTypes[(Array.IndexOf(PieceTypes, Pieces[0].T) + Array.IndexOf(PieceTypes, Pieces[0].T)) % 5]; //Follow the table from the manual.
+      FinalPieceType =  PieceTypes[(Array.IndexOf(PieceTypes, Pieces[0].T) + Array.IndexOf(PieceTypes, Pieces[6].T)) % 5]; //Follow the table from the manual.
 
       for (int i = 0; i < 100000; i++) {
          do {
             Eighth.ChangePiece(Rnd.Range(0, 5), Rnd.Range(0, 5), Rnd.Range(0, 5), PieceTypes[Rnd.Range(0, 5)]);         //Generates the last piece such that it attacks the first and is attacked by the last. Probably.
          } while (Eighth.T != FinalPieceType);
-         
+
+         for (int j = 0; j < 7; j++) {
+            if (ShareExactCoordinate(Pieces[j], Eighth)) {
+               continue;
+            }
+         }
+
          if (PB.CheckPiece(Eighth.T, Eighth.L, Eighth.R, Eighth.C, Pieces[0].L, Pieces[0].R, Pieces[0].C) && PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Eighth.L, Eighth.R, Eighth.C)) {
             break;
+         }
+
+         if (i == 99999) {  //Just in case.
+            GeneratePuzzle();
+            return;
          }
       }
 
       LogPieces();
    }
 
+   bool CheckDuplicateCoordinatesForAll (Piece Input) {
+      for (int i = 0; i < 7; i++) {
+         if (ShareExactCoordinate(Input, Pieces[i])) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   bool ShareExactCoordinate (Piece P1, Piece P2) {
+      if (P1.R == P2.R) {
+         if (P1.C == P2.C) {
+            if (P1.L == P2.L) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   private IEnumerator KeyPress (int HiKavin) {
+      CoordinateButtons[HiKavin].AddInteractionPunch(0.125f);
+      Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+      for (int i = 0; i < 5; i++) {
+         CoordinateButtons[HiKavin].transform.localPosition += new Vector3(0, 0, -0.005f);
+         yield return new WaitForSeconds(0.005F);
+      }
+   }
+
+   private IEnumerator KeyDepress (int HiKavin) {
+      CoordinateButtons[HiKavin].AddInteractionPunch(0.125f);
+      Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+      for (int i = 0; i < 5; i++) {
+         CoordinateButtons[HiKavin].transform.localPosition += new Vector3(0, 0, +0.005f);
+         yield return new WaitForSeconds(0.005F);
+      }
+   }
+
    void Solve () {
       GetComponent<KMBombModule>().HandlePass();
+      ModuleSolved = true;
    }
 
    void Strike () {
