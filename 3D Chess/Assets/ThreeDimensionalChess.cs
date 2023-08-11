@@ -214,7 +214,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
    void GeneratePuzzle () {
       int Timwi = 0;
       ULTRATIMWI++;
-      if (ULTRATIMWI > 10) {
+      if (ULTRATIMWI > 20) {
          CoordinateDisplay.text = "ERROR";
          Solve();
       }
@@ -238,7 +238,12 @@ public class ThreeDimensionalChess : MonoBehaviour {
                goto RestartPiece;
             }
          }
+
          Timwi = 0;
+      }
+      if (PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Pieces[0].L, Pieces[0].R, Pieces[0].C)) {  //Double ensures 7 doesn't attack 1
+         GeneratePuzzle();
+         return;
       }
 
       FinalPieceType =  PieceTypes[(Array.IndexOf(PieceTypes, Pieces[0].T) + Array.IndexOf(PieceTypes, Pieces[6].T)) % 5]; //Follow the table from the manual.
@@ -263,7 +268,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
             return;
          }
       }
-
+      Debug.LogFormat("[3D Chess #{0}] Generated a puzzle in {1} attempts.", ModuleId, ULTRATIMWI);
       LogPieces();
    }
 
@@ -315,7 +320,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
    }
 
 #pragma warning disable 414
-   private readonly string TwitchHelpMessage = @"Use !{0} to do something.";
+   private readonly string TwitchHelpMessage = @"Use !{0} cycle to cycle through all of the pieces. Use !{0} submit X|I|A|#.";
 #pragma warning restore 414
 
    IEnumerator ProcessTwitchCommand (string Command) {
