@@ -295,6 +295,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
    private IEnumerator KeyPress (int HiKavin) {
       CoordinateButtons[HiKavin].AddInteractionPunch(0.125f);
       Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
+      Audio.PlaySoundAtTransform("Press", CoordinateButtons[HiKavin].transform);
       for (int i = 0; i < 5; i++) {
          CoordinateButtons[HiKavin].transform.localPosition += new Vector3(0, 0, -0.005f);
          yield return new WaitForSeconds(0.005F);
@@ -312,6 +313,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
 
    void Solve () {
       GetComponent<KMBombModule>().HandlePass();
+      Audio.PlaySoundAtTransform("Solve3D", transform);
       ModuleSolved = true;
    }
 
