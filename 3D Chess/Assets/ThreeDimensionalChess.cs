@@ -324,11 +324,80 @@ public class ThreeDimensionalChess : MonoBehaviour {
 #pragma warning restore 414
 
    IEnumerator ProcessTwitchCommand (string Command) {
-      yield return null;
+      if (Command.EqualsIgnoreCase("cycle"))
+      {
+         yield return null;
+         if (LastPressed != 0)
+            CoordinateButtons[0].OnInteract();
+         for (int i = 1; i < 7; i++)
+         {
+            yield return "trywaitcancel 2";
+            CoordinateButtons[i].OnInteract();
+         }
+         yield break;
+      }
+      if (Command.ToLowerInvariant().StartsWith("submit "))
+      {
+         string[] parameters = Command.Substring(7).Split('|');
+         if (parameters.Length > 4 || parameters.Length < 4)
+         {
+            yield return "sendtochaterror Valid coordinates must have three '|'s!";
+            yield break;
+         }
+         if (!PieceTypesAbbr.Contains(parameters[0].ToUpperInvariant()))
+         {
+            yield return "sendtochaterror!f The specified piece '" + parameters[0] + "' is invalid!";
+            yield break;
+         }
+         if (!CoordinateNotation[0].Contains(parameters[1].ToUpperInvariant()))
+         {
+            yield return "sendtochaterror!f The specified layer '" + parameters[1] + "' is invalid!";
+            yield break;
+         }
+         if (!CoordinateNotation[1].Contains(parameters[2].ToUpperInvariant()))
+         {
+            yield return "sendtochaterror!f The specified chess coordinate letter '" + parameters[2] + "' is invalid!";
+            yield break;
+         }
+         if (!CoordinateNotation[2].Contains(parameters[3]))
+         {
+            yield return "sendtochaterror!f The specified chess coordinate numeral '" + parameters[3] + "' is invalid!";
+            yield break;
+         }
+         yield return null;
+         while (PieceTypesAbbr[SubmitCoordinateIndices[0]] != parameters[0].ToUpperInvariant())
+         {
+            SubmitButtons[0].OnInteract();
+            yield return new WaitForSeconds(.1f);
+         }
+         for (int i = 0; i < 3; i++)
+         {
+            while (CoordinateNotation[i][SubmitCoordinateIndices[i + 1]] != parameters[i + 1].ToUpperInvariant())
+            {
+               SubmitButtons[i + 1].OnInteract();
+               yield return new WaitForSeconds(.1f);
+            }
+         }
+         SubmitButtons[4].OnInteract();
+      }
    }
 
    IEnumerator TwitchHandleForcedSolve () {
-      yield return null;
+      while (PieceTypes[SubmitCoordinateIndices[0]] != Eighth.T)
+      {
+         SubmitButtons[0].OnInteract();
+         yield return new WaitForSeconds(.1f);
+      }
+      int[] correctIndex = new int[] { Eighth.L, Eighth.C, Eighth.R };
+      for (int i = 0; i < 3; i++)
+      {
+         while (CoordinateNotation[i][SubmitCoordinateIndices[i + 1]] != CoordinateNotation[i][correctIndex[i]])
+         {
+            SubmitButtons[i + 1].OnInteract();
+            yield return new WaitForSeconds(.1f);
+         }
+      }
+      SubmitButtons[4].OnInteract();
    }
 
    public class Piece {
