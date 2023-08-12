@@ -346,22 +346,22 @@ public class ThreeDimensionalChess : MonoBehaviour {
          }
          if (!PieceTypesAbbr.Contains(parameters[0].ToUpperInvariant()))
          {
-            yield return "sendtochaterror The specified piece '" + parameters[0] + "' is invalid!";
+            yield return "sendtochaterror!f The specified piece '" + parameters[0] + "' is invalid!";
             yield break;
          }
          if (!CoordinateNotation[0].Contains(parameters[1].ToUpperInvariant()))
          {
-            yield return "sendtochaterror The specified layer '" + parameters[1] + "' is invalid!";
+            yield return "sendtochaterror!f The specified layer '" + parameters[1] + "' is invalid!";
             yield break;
          }
          if (!CoordinateNotation[1].Contains(parameters[2].ToUpperInvariant()))
          {
-            yield return "sendtochaterror The specified chess coordinate letter '" + parameters[2] + "' is invalid!";
+            yield return "sendtochaterror!f The specified chess coordinate letter '" + parameters[2] + "' is invalid!";
             yield break;
          }
          if (!CoordinateNotation[2].Contains(parameters[3]))
          {
-            yield return "sendtochaterror The specified chess coordinate numeral '" + parameters[3] + "' is invalid!";
+            yield return "sendtochaterror!f The specified chess coordinate numeral '" + parameters[3] + "' is invalid!";
             yield break;
          }
          yield return null;
