@@ -154,10 +154,10 @@ public class ThreeDimensionalChess : MonoBehaviour {
                else {
                   Strike();
                   Debug.LogFormat("[3D Chess #{0}] Submitting a {1} at {2}{3}{4} is incorrect.", ModuleId, Test.T, CoordinateNotation[0][Test.L], CoordinateNotation[1][Test.C], CoordinateNotation[2][Test.R]);
-                  if (PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Test.L, Test.R, Test.C)) {
+                  if (!PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Test.L, Test.R, Test.C)) {
                      Debug.LogFormat("[3D Chess #{0}] The seventh piece does not attack the eighth.", ModuleId);
                   }
-                  if (PB.CheckPiece(Test.T, Test.L, Test.R, Test.C, Pieces[0].L, Pieces[0].R, Pieces[0].C)) {
+                  if (!PB.CheckPiece(Test.T, Test.L, Test.R, Test.C, Pieces[0].L, Pieces[0].R, Pieces[0].C)) {
                      Debug.LogFormat("[3D Chess #{0}] The eighth piece does not attack the first.", ModuleId);
                   }
                }
@@ -198,8 +198,53 @@ public class ThreeDimensionalChess : MonoBehaviour {
       }
       //This resets all the submit displays to their default state.
 
-      GeneratePuzzle();
+      if (true) {
+         GeneratePuzzle();
+      }
+      else {
+         DebugGeneration();
+      }
+      
+
       CoordinateDisplay.text = "";
+   }
+
+   void DebugGeneration () {
+      Pieces[0].ChangePiece(1, 1, 1, PieceTypes[3]);
+      Pieces[1].ChangePiece(2, 1, 1, PieceTypes[0]);
+      Pieces[2].ChangePiece(2, 1, 0, PieceTypes[2]);
+      Pieces[3].ChangePiece(1, 1, 1, PieceTypes[3]);
+      Pieces[4].ChangePiece(4, 3, 3, PieceTypes[1]);
+
+      Pieces[5].ChangePiece(4, 3, 0, PieceTypes[2]);
+
+      Pieces[6].ChangePiece(0, 0, 3, PieceTypes[0]);
+
+      FinalPieceType = PieceTypes[(Array.IndexOf(PieceTypes, Pieces[0].T) + Array.IndexOf(PieceTypes, Pieces[6].T)) % 5]; //Follow the table from the manual.
+
+      for (int i = 0; i < 100000; i++) {
+         do {
+            Eighth.ChangePiece(Rnd.Range(0, 5), Rnd.Range(0, 5), Rnd.Range(0, 5), PieceTypes[Rnd.Range(0, 5)]);         //Generates the last piece such that it attacks the first and is attacked by the last. Probably.
+         } while (Eighth.T != FinalPieceType);
+
+         for (int j = 0; j < 7; j++) {
+            if (ShareExactCoordinate(Pieces[j], Eighth)) {
+               continue;
+            }
+         }
+
+         if (PB.CheckPiece(Eighth.T, Eighth.L, Eighth.R, Eighth.C, Pieces[0].L, Pieces[0].R, Pieces[0].C) && PB.CheckPiece(Pieces[6].T, Pieces[6].L, Pieces[6].R, Pieces[6].C, Eighth.L, Eighth.R, Eighth.C)) {
+            break;
+         }
+
+         if (i == 99999) {  //Just in case.
+            GeneratePuzzle();
+            Debug.LogFormat("[3D Chess #{0}] Hopefully this message doesn't pop up.", ModuleId, ULTRATIMWI);
+            return;
+         }
+      }
+      Debug.LogFormat("[3D Chess #{0}] Generated a puzzle in {1} attempts.", ModuleId, ULTRATIMWI);
+      LogPieces();
    }
 
    void LogPieces () {
@@ -265,6 +310,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
 
          if (i == 99999) {  //Just in case.
             GeneratePuzzle();
+            Debug.LogFormat("[3D Chess #{0}] Hopefully this message doesn't pop up.", ModuleId, ULTRATIMWI);
             return;
          }
       }
