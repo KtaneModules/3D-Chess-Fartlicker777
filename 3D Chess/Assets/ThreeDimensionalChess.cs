@@ -275,7 +275,7 @@ public class ThreeDimensionalChess : MonoBehaviour {
          }
          do {
             Pieces[i].ChangePiece(Rnd.Range(0, 5), Rnd.Range(0, 5), Rnd.Range(0, 5), PieceTypes[Rnd.Range(0, 5)]);
-         } while (!PB.CheckPiece(Pieces[i - 1].T, Pieces[i - 1].L, Pieces[i - 1].R, Pieces[i - 1].C, Pieces[i].L, Pieces[i].R, Pieces[i].C)); //Check that the previous piece attacks the current one
+         } while (!PB.CheckPiece(Pieces[i - 1].T, Pieces[i - 1].L, Pieces[i - 1].R, Pieces[i - 1].C, Pieces[i].L, Pieces[i].R, Pieces[i].C) || ShareExactCoordinate(Pieces[i - 1], Pieces[i])); //Check that the previous piece attacks the current one
          
 
          for (int j = 0; j < i - 1; j++) {
